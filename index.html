@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Terabox Viewer</title>
+  <title>Terabox Resolver Player</title>
   <style>
     :root {
       --bg-dark: #0d0d0d;
@@ -65,6 +65,13 @@
     button:hover {
       opacity: 0.85;
     }
+    video {
+      margin-top: 2rem;
+      width: 100%;
+      max-width: 800px;
+      border-radius: 12px;
+      background: black;
+    }
     .likes-list {
       width: 100%;
       max-width: 520px;
@@ -93,36 +100,45 @@
   </style>
 </head>
 <body>
-  <h1>Terabox Link Launcher</h1>
-  <input id="videoLink" type="text" placeholder="Paste Terabox video link here" />
+  <h1>📺 Terabox Video Player</h1>
+  <input id="videoLink" type="text" placeholder="Paste Terabox link" />
   <div class="actions">
-    <button onclick="playVideo()">▶️ Play</button>
-    <button onclick="saveLastLink()">💾 Save Link</button>
+    <button onclick="fetchAndPlay()">▶️ Play</button>
+    <button onclick="saveLastLink()">💾 Save</button>
     <button onclick="likeLink()">❤️ Like</button>
-    <button onclick="toggleTheme()">🌓 Toggle Theme</button>
+    <button onclick="toggleTheme()">🌓 Theme</button>
   </div>
+  <video id="player" controls></video>
   <div class="likes-list">
-    <h3>❤️ Liked Videos</h3>
+    <h3>❤️ Liked</h3>
     <ul id="likes"></ul>
   </div>
   <script>
     const input = document.getElementById('videoLink');
+    const player = document.getElementById('player');
     const likesUl = document.getElementById('likes');
 
-    function playVideo() {
-      const link = input.value.trim();
-      if (!link || !link.includes('terabox')) {
-        alert('Please enter a valid Terabox link.');
-        return;
+    async function fetchAndPlay() {
+      const url = input.value.trim();
+      if (!url.includes('terabox')) return alert('❌ Invalid Terabox link');
+      try {
+        player.src = '';
+        const res = await fetch(`https://your-backend-url.onrender.com/resolve?url=${encodeURIComponent(url)}`);
+        const data = await res.json();
+        if (!data.video) return alert('❌ Video not found');
+        player.src = data.video;
+        player.play();
+      } catch (err) {
+        alert('❌ Could not fetch video');
+        console.error(err);
       }
-      window.open(link, '_blank');
     }
 
     function saveLastLink() {
       const link = input.value.trim();
       if (link) {
         localStorage.setItem('lastLink', link);
-        alert('Last watched link saved!');
+        alert('✅ Last link saved');
       }
     }
 
@@ -143,28 +159,23 @@
       let likes = JSON.parse(localStorage.getItem('likedLinks')) || [];
       likes.forEach(link => {
         const li = document.createElement('li');
-        li.innerHTML = `<a href="${link}" target="_blank">${link}</a>`;
+        li.innerHTML = `<a href="#" onclick="input.value='${link}';fetchAndPlay();return false;">${link}</a>`;
         likesUl.appendChild(li);
       });
     }
 
     function toggleTheme() {
-      if (document.body.classList.contains('light')) {
-        document.body.classList.remove('light');
-        localStorage.setItem('theme', 'dark');
-      } else {
-        document.body.classList.add('light');
-        localStorage.setItem('theme', 'light');
-      }
+      document.body.classList.toggle('light');
+      localStorage.setItem('theme', document.body.classList.contains('light') ? 'light' : 'dark');
     }
 
     function loadInitial() {
       const last = localStorage.getItem('lastLink');
       if (last) input.value = last;
 
-      const theme = localStorage.getItem('theme');
-      if (theme === 'light') document.body.classList.add('light');
-
+      if (localStorage.getItem('theme') === 'light') {
+        document.body.classList.add('light');
+      }
       renderLikes();
     }
 
