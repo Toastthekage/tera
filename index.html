@@ -81,15 +81,15 @@
       const url = document.getElementById('urlInput').value;
       if (!url) return alert('Please paste a valid link.');
 
-      const api = `https://api.codetabs.com/v1/proxy?quest=https://terabox-api-henna.vercel.app/api/info?link=${encodeURIComponent(url)}`;
+      const api = `http://localhost:3000/resolve?link=${encodeURIComponent(url)}`;
       try {
         const res = await fetch(api);
         const data = await res.json();
         console.log("API response:", data);
 
-        if (data?.data?.downloadUrl) {
+        if (data?.videoUrl) {
           const player = document.getElementById('videoPlayer');
-          player.src = data.data.downloadUrl;
+          player.src = data.videoUrl;
           player.style.display = 'block';
           player.play();
         } else {
@@ -105,13 +105,13 @@
       const url = document.getElementById('urlInput').value;
       if (!url) return alert('Please paste a valid link.');
 
-      const api = `https://api.codetabs.com/v1/proxy?quest=https://terabox-api-henna.vercel.app/api/info?link=${encodeURIComponent(url)}`;
+      const api = `http://localhost:3000/resolve?link=${encodeURIComponent(url)}`;
       fetch(api)
         .then(res => res.json())
         .then(data => {
           console.log("API response:", data);
-          if (data?.data?.downloadUrl) {
-            window.open(data.data.downloadUrl, '_blank');
+          if (data?.videoUrl) {
+            window.open(data.videoUrl, '_blank');
           } else {
             alert('❌ Unable to fetch download link.');
           }
