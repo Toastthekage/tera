@@ -1,213 +1,123 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Terabox Viewer</title>
-  <style>
-    :root {
-      --bg-dark: #0d0d0d;
-      --fg-dark: #ffffff;
-      --card-bg: #1c1c1c;
-      --accent: #2e8bff;
-    }
-    body {
-      margin: 0;
-      font-family: 'Segoe UI', Roboto, sans-serif;
-      background-color: var(--bg-dark);
-      color: var(--fg-dark);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: 2rem 1rem;
-      min-height: 100vh;
-    }
-    h1 {
-      font-weight: 500;
-      font-size: 1.6rem;
-      margin-bottom: 1rem;
-    }
-    input {
-      padding: 0.75rem;
-      width: 100%;
-      max-width: 480px;
-      border-radius: 12px;
-      border: none;
-      outline: none;
-      font-size: 1rem;
-      background-color: var(--card-bg);
-      color: var(--fg-dark);
-      margin-bottom: 1rem;
-    }
-    .actions {
-      position: sticky;
-      top: 0;
-      z-index: 100;
-      background: var(--bg-dark);
-      padding: 1rem 0.5rem;
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
-      gap: 0.5rem;
-      width: 100%;
-      max-width: 520px;
-    }
-    button {
-      padding: 0.6rem 1.2rem;
-      border-radius: 10px;
-      font-size: 1rem;
-      background-color: var(--accent);
-      color: #fff;
-      border: none;
-      cursor: pointer;
-      transition: 0.2s ease;
-    }
-    button:hover {
-      opacity: 0.85;
-    }
-    .likes-list {
-      width: 100%;
-      max-width: 520px;
-      margin-top: 2rem;
-    }
-    .likes-list h3 {
-      font-size: 1.2rem;
-      margin-bottom: 0.5rem;
-      font-weight: 400;
-    }
-    .likes-list ul {
-      list-style: none;
-      padding: 0;
-    }
-    .likes-list li {
-      background: var(--card-bg);
-      padding: 0.75rem;
-      border-radius: 8px;
-      margin-bottom: 0.5rem;
-      word-break: break-word;
-    }
-    .likes-list li a {
-      color: var(--accent);
-      text-decoration: none;
-    }
-    video {
-      margin-top: 1rem;
-      max-width: 100%;
-      border-radius: 12px;
-      box-shadow: 0 0 20px rgba(255, 255, 255, 0.1);
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Terabox Video Player</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        .input-group {
+            margin-bottom: 20px;
+        }
+        input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 10px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .player-container {
+            margin-top: 20px;
+            display: none;
+        }
+        #videoFrame {
+            width: 100%;
+            height: 450px;
+            border: none;
+            border-radius: 4px;
+        }
+        .error {
+            color: red;
+            margin-top: 10px;
+        }
+    </style>
 </head>
 <body>
-  <h1>Terabox Link Launcher</h1>
-  <input id="videoLink" type="text" placeholder="Paste Terabox video link here" />
-  <div class="actions">
-    <button onclick="playVideo()">▶️ Play</button>
-    <button onclick="saveLastLink()">💾 Save Link</button>
-    <button onclick="likeLink()">❤️ Like</button>
-    <button onclick="toggleTheme()">🌓 Toggle Theme</button>
-  </div>
-  <div class="likes-list">
-    <h3>❤️ Liked Videos</h3>
-    <ul id="likes"></ul>
-  </div>
+    <div class="container">
+        <h1>Terabox Video Player</h1>
+        <div class="input-group">
+            <input type="text" id="teraboxUrl" placeholder="Enter Terabox video URL (e.g., https://1024terabox.com/s/1MwSsHb67IZpyV8AFYQyI7Q)">
+            <button onclick="loadVideo()">Play Video</button>
+            <div id="error" class="error"></div>
+        </div>
+        <div class="player-container" id="playerContainer">
+            <iframe id="videoFrame" allowfullscreen></iframe>
+        </div>
+    </div>
 
-  <script>
-    const input = document.getElementById('videoLink');
-    const likesUl = document.getElementById('likes');
-
-    function playVideo() {
-      const link = input.value.trim();
-      if (!link || !link.includes('terabox')) {
-        alert('Please enter a valid Terabox link.');
-        return;
-      }
-
-      const playBtn = document.querySelector('button');
-      playBtn.innerText = '⏳ Resolving...';
-
-      fetch(`http://localhost:3000/resolve?url=${encodeURIComponent(link)}`)
-        .then(res => res.json())
-        .then(data => {
-          if (data.video) {
-            showVideoPlayer(data.video);
-          } else {
-            alert('❌ Video not found.');
-          }
-        })
-        .catch(err => {
-          alert('Error connecting to backend.');
-          console.error(err);
-        })
-        .finally(() => {
-          playBtn.innerText = '▶️ Play';
-        });
-    }
-
-    function showVideoPlayer(videoUrl) {
-      const existingPlayer = document.getElementById('videoPlayer');
-      if (existingPlayer) existingPlayer.remove();
-
-      const video = document.createElement('video');
-      video.id = 'videoPlayer';
-      video.controls = true;
-      video.src = videoUrl;
-      video.autoplay = true;
-
-      document.body.appendChild(video);
-    }
-
-    function saveLastLink() {
-      const link = input.value.trim();
-      if (link) {
-        localStorage.setItem('lastLink', link);
-        alert('Last watched link saved!');
-      }
-    }
-
-    function likeLink() {
-      const link = input.value.trim();
-      if (link) {
-        let likes = JSON.parse(localStorage.getItem('likedLinks')) || [];
-        if (!likes.includes(link)) {
-          likes.push(link);
-          localStorage.setItem('likedLinks', JSON.stringify(likes));
-          renderLikes();
+    <script>
+        function loadVideo() {
+            const url = document.getElementById('teraboxUrl').value.trim();
+            const errorElement = document.getElementById('error');
+            const playerContainer = document.getElementById('playerContainer');
+            
+            // Reset
+            errorElement.textContent = '';
+            playerContainer.style.display = 'none';
+            
+            // Validate URL
+            if (!url) {
+                errorElement.textContent = 'Please enter a Terabox URL';
+                return;
+            }
+            
+            // Check if it's a Terabox URL
+            if (!url.includes('terabox.com/s/')) {
+                errorElement.textContent = 'Please enter a valid Terabox share URL';
+                return;
+            }
+            
+            // Extract file ID (this is a simplified approach)
+            const parts = url.split('/s/');
+            if (parts.length < 2) {
+                errorElement.textContent = 'Could not extract video ID from URL';
+                return;
+            }
+            
+            const fileId = parts[1].split('/')[0].split('?')[0];
+            
+            // For demonstration - in a real implementation you would need a backend service
+            // to handle the actual video streaming due to CORS and security restrictions
+            
+            // This is just a placeholder - in reality you would need to:
+            // 1. Have a backend service that can fetch the video from Terabox
+            // 2. Stream it to your frontend while avoiding CORS issues
+            // 3. Handle authentication if needed
+            
+            // For this demo, we'll just show a message
+            document.getElementById('videoFrame').src = '';
+            playerContainer.style.display = 'block';
+            errorElement.textContent = 'Note: This is a demo interface. A complete implementation would require a backend service to properly fetch and stream Terabox videos while bypassing their restrictions.';
         }
-      }
-    }
-
-    function renderLikes() {
-      likesUl.innerHTML = '';
-      let likes = JSON.parse(localStorage.getItem('likedLinks')) || [];
-      likes.forEach(link => {
-        const li = document.createElement('li');
-        li.innerHTML = `<a href="${link}" target="_blank">${link}</a>`;
-        likesUl.appendChild(li);
-      });
-    }
-
-    function toggleTheme() {
-      if (document.body.classList.contains('light')) {
-        document.body.classList.remove('light');
-        localStorage.setItem('theme', 'dark');
-      } else {
-        document.body.classList.add('light');
-        localStorage.setItem('theme', 'light');
-      }
-    }
-
-    function loadInitial() {
-      const last = localStorage.getItem('lastLink');
-      if (last) input.value = last;
-
-      const theme = localStorage.getItem('theme');
-      if (theme === 'light') document.body.classList.add('light');
-
-      renderLikes();
-    }
-
-    loadInitial();
-  </script>
+    </script>
 </body>
 </html>
