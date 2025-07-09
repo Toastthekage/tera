@@ -81,17 +81,23 @@
       const url = document.getElementById('urlInput').value;
       if (!url) return alert('Please paste a valid link.');
 
-      const api = `https://terabox-api-henna.vercel.app/api/info?link=${encodeURIComponent(url)}`;
-      const res = await fetch(api);
-      const data = await res.json();
+      const api = `https://api.codetabs.com/v1/proxy?quest=https://terabox-api-henna.vercel.app/api/info?link=${encodeURIComponent(url)}`;
+      try {
+        const res = await fetch(api);
+        const data = await res.json();
+        console.log("API response:", data);
 
-      if (data?.data?.downloadUrl) {
-        const player = document.getElementById('videoPlayer');
-        player.src = data.data.downloadUrl;
-        player.style.display = 'block';
-        player.play();
-      } else {
-        alert('❌ Video not found or link is restricted.');
+        if (data?.data?.downloadUrl) {
+          const player = document.getElementById('videoPlayer');
+          player.src = data.data.downloadUrl;
+          player.style.display = 'block';
+          player.play();
+        } else {
+          alert('❌ Video not found or link is restricted.');
+        }
+      } catch (err) {
+        console.error(err);
+        alert('⚠️ Network error or invalid API response.');
       }
     }
 
@@ -99,17 +105,21 @@
       const url = document.getElementById('urlInput').value;
       if (!url) return alert('Please paste a valid link.');
 
-      const api = `https://terabox-api-henna.vercel.app/api/info?link=${encodeURIComponent(url)}`;
+      const api = `https://api.codetabs.com/v1/proxy?quest=https://terabox-api-henna.vercel.app/api/info?link=${encodeURIComponent(url)}`;
       fetch(api)
         .then(res => res.json())
         .then(data => {
+          console.log("API response:", data);
           if (data?.data?.downloadUrl) {
             window.open(data.data.downloadUrl, '_blank');
           } else {
             alert('❌ Unable to fetch download link.');
           }
         })
-        .catch(err => alert('Network error'));
+        .catch(err => {
+          console.error(err);
+          alert('⚠️ Network error');
+        });
     }
   </script>
 </body>
