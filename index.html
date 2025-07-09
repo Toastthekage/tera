@@ -1,123 +1,210 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Terabox Video Player</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 20px;
-            background-color: #f5f5f5;
-        }
-        .container {
-            background-color: white;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
-        h1 {
-            color: #333;
-            text-align: center;
-        }
-        .input-group {
-            margin-bottom: 20px;
-        }
-        input[type="text"] {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            font-size: 16px;
-        }
-        button {
-            background-color: #4CAF50;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 16px;
-            margin-top: 10px;
-        }
-        button:hover {
-            background-color: #45a049;
-        }
-        .player-container {
-            margin-top: 20px;
-            display: none;
-        }
-        #videoFrame {
-            width: 100%;
-            height: 450px;
-            border: none;
-            border-radius: 4px;
-        }
-        .error {
-            color: red;
-            margin-top: 10px;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Terabox Viewer</title>
+  <link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Unbounded', sans-serif;
+      background-color: #f3e3e1;
+      color: #111;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+      min-height: 100vh;
+      background-image: url('https://www.transparenttextures.com/patterns/asfalt-light.png');
+    }
+
+    h1 {
+      font-size: 2.5rem;
+      font-weight: 700;
+      margin-bottom: 1rem;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+    }
+
+    input {
+      padding: 1rem;
+      width: 100%;
+      max-width: 500px;
+      border: 2px solid #333;
+      border-radius: 20px;
+      outline: none;
+      font-size: 1rem;
+      background-color: #fff;
+      margin-bottom: 1rem;
+      text-align: center;
+    }
+
+    .actions {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin-bottom: 2rem;
+    }
+
+    button {
+      padding: 0.75rem 1.5rem;
+      border-radius: 30px;
+      font-size: 1rem;
+      border: none;
+      cursor: pointer;
+      transition: 0.3s ease;
+      font-weight: 500;
+      background-color: #111;
+      color: #fff;
+    }
+
+    button:hover {
+      background-color: #444;
+    }
+
+    .likes-list {
+      max-width: 520px;
+      width: 100%;
+      text-align: center;
+    }
+
+    .likes-list h3 {
+      font-size: 1.25rem;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+    }
+
+    .likes-list ul {
+      list-style: none;
+      padding: 0;
+    }
+
+    .likes-list li {
+      background-color: #fff;
+      padding: 0.75rem;
+      border-radius: 12px;
+      margin: 0.25rem 0;
+      font-size: 0.9rem;
+    }
+
+    .likes-list li a {
+      color: #2e2e2e;
+      text-decoration: none;
+      font-weight: bold;
+    }
+
+    video {
+      max-width: 100%;
+      border-radius: 12px;
+      margin-top: 1.5rem;
+      box-shadow: 0 0 20px rgba(0,0,0,0.15);
+    }
+  </style>
 </head>
 <body>
-    <div class="container">
-        <h1>Terabox Video Player</h1>
-        <div class="input-group">
-            <input type="text" id="teraboxUrl" placeholder="Enter Terabox video URL (e.g., https://1024terabox.com/s/1MwSsHb67IZpyV8AFYQyI7Q)">
-            <button onclick="loadVideo()">Play Video</button>
-            <div id="error" class="error"></div>
-        </div>
-        <div class="player-container" id="playerContainer">
-            <iframe id="videoFrame" allowfullscreen></iframe>
-        </div>
-    </div>
+  <h1>Terabox Stream</h1>
+  <input id="videoLink" type="text" placeholder="Paste Terabox link here" />
+  <div class="actions">
+    <button onclick="playVideo()">▶️ Play</button>
+    <button onclick="saveLastLink()">💾 Save</button>
+    <button onclick="likeLink()">❤️ Like</button>
+    <button onclick="toggleTheme()">🌓 Theme</button>
+  </div>
+  <div class="likes-list">
+    <h3>❤️ Your Likes</h3>
+    <ul id="likes"></ul>
+  </div>
 
-    <script>
-        function loadVideo() {
-            const url = document.getElementById('teraboxUrl').value.trim();
-            const errorElement = document.getElementById('error');
-            const playerContainer = document.getElementById('playerContainer');
-            
-            // Reset
-            errorElement.textContent = '';
-            playerContainer.style.display = 'none';
-            
-            // Validate URL
-            if (!url) {
-                errorElement.textContent = 'Please enter a Terabox URL';
-                return;
-            }
-            
-            // Check if it's a Terabox URL
-            if (!url.includes('terabox.com/s/')) {
-                errorElement.textContent = 'Please enter a valid Terabox share URL';
-                return;
-            }
-            
-            // Extract file ID (this is a simplified approach)
-            const parts = url.split('/s/');
-            if (parts.length < 2) {
-                errorElement.textContent = 'Could not extract video ID from URL';
-                return;
-            }
-            
-            const fileId = parts[1].split('/')[0].split('?')[0];
-            
-            // For demonstration - in a real implementation you would need a backend service
-            // to handle the actual video streaming due to CORS and security restrictions
-            
-            // This is just a placeholder - in reality you would need to:
-            // 1. Have a backend service that can fetch the video from Terabox
-            // 2. Stream it to your frontend while avoiding CORS issues
-            // 3. Handle authentication if needed
-            
-            // For this demo, we'll just show a message
-            document.getElementById('videoFrame').src = '';
-            playerContainer.style.display = 'block';
-            errorElement.textContent = 'Note: This is a demo interface. A complete implementation would require a backend service to properly fetch and stream Terabox videos while bypassing their restrictions.';
+  <script>
+    const input = document.getElementById('videoLink');
+    const likesUl = document.getElementById('likes');
+
+    function playVideo() {
+      const link = input.value.trim();
+      if (!link || !link.includes('terabox')) {
+        alert('Please enter a valid Terabox link.');
+        return;
+      }
+
+      const playBtn = document.querySelector('button');
+      playBtn.innerText = '⏳ Fetching...';
+
+      fetch(`http://localhost:3000/resolve?url=${encodeURIComponent(link)}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.video) {
+            showVideoPlayer(data.video);
+          } else {
+            alert('❌ Video not found.');
+          }
+        })
+        .catch(err => {
+          alert('Error contacting server.');
+          console.error(err);
+        })
+        .finally(() => {
+          playBtn.innerText = '▶️ Play';
+        });
+    }
+
+    function showVideoPlayer(videoUrl) {
+      const existingPlayer = document.getElementById('videoPlayer');
+      if (existingPlayer) existingPlayer.remove();
+
+      const video = document.createElement('video');
+      video.id = 'videoPlayer';
+      video.controls = true;
+      video.src = videoUrl;
+      video.autoplay = true;
+
+      document.body.appendChild(video);
+    }
+
+    function saveLastLink() {
+      const link = input.value.trim();
+      if (link) {
+        localStorage.setItem('lastLink', link);
+        alert('Last link saved!');
+      }
+    }
+
+    function likeLink() {
+      const link = input.value.trim();
+      if (link) {
+        let likes = JSON.parse(localStorage.getItem('likedLinks')) || [];
+        if (!likes.includes(link)) {
+          likes.push(link);
+          localStorage.setItem('likedLinks', JSON.stringify(likes));
+          renderLikes();
         }
-    </script>
+      }
+    }
+
+    function renderLikes() {
+      likesUl.innerHTML = '';
+      let likes = JSON.parse(localStorage.getItem('likedLinks')) || [];
+      likes.forEach(link => {
+        const li = document.createElement('li');
+        li.innerHTML = `<a href="${link}" target="_blank">${link}</a>`;
+        likesUl.appendChild(li);
+      });
+    }
+
+    function toggleTheme() {
+      document.body.style.backgroundColor = document.body.style.backgroundColor === 'black' ? '#f3e3e1' : 'black';
+      document.body.style.color = document.body.style.color === 'white' ? '#111' : 'white';
+    }
+
+    function loadInitial() {
+      const last = localStorage.getItem('lastLink');
+      if (last) input.value = last;
+      renderLikes();
+    }
+
+    loadInitial();
+  </script>
 </body>
 </html>
