@@ -3,42 +3,37 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Terabox Viewer</title>
+  <title>Stream & Download</title>
   <link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@400;700&display=swap" rel="stylesheet">
   <style>
     body {
-      margin: 0;
       font-family: 'Unbounded', sans-serif;
-      background-color: #f3e3e1;
+      background-color: #f4e9e7;
       color: #111;
       display: flex;
       flex-direction: column;
       align-items: center;
-      justify-content: center;
       padding: 2rem;
       min-height: 100vh;
-      background-image: url('https://www.transparenttextures.com/patterns/asfalt-light.png');
     }
 
     h1 {
-      font-size: 2.5rem;
-      font-weight: 700;
+      font-size: 2.8rem;
       margin-bottom: 1rem;
-      text-transform: uppercase;
-      letter-spacing: 2px;
+      font-weight: 700;
     }
 
     input {
       padding: 1rem;
       width: 100%;
       max-width: 500px;
+      border-radius: 25px;
       border: 2px solid #333;
-      border-radius: 20px;
-      outline: none;
       font-size: 1rem;
-      background-color: #fff;
+      outline: none;
       margin-bottom: 1rem;
       text-align: center;
+      background: #fff;
     }
 
     .actions {
@@ -50,161 +45,72 @@
     }
 
     button {
-      padding: 0.75rem 1.5rem;
-      border-radius: 30px;
-      font-size: 1rem;
-      border: none;
-      cursor: pointer;
-      transition: 0.3s ease;
-      font-weight: 500;
       background-color: #111;
       color: #fff;
+      border: none;
+      padding: 0.75rem 1.5rem;
+      border-radius: 25px;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: background 0.3s ease;
     }
 
     button:hover {
-      background-color: #444;
-    }
-
-    .likes-list {
-      max-width: 520px;
-      width: 100%;
-      text-align: center;
-    }
-
-    .likes-list h3 {
-      font-size: 1.25rem;
-      font-weight: 600;
-      margin-bottom: 0.5rem;
-    }
-
-    .likes-list ul {
-      list-style: none;
-      padding: 0;
-    }
-
-    .likes-list li {
-      background-color: #fff;
-      padding: 0.75rem;
-      border-radius: 12px;
-      margin: 0.25rem 0;
-      font-size: 0.9rem;
-    }
-
-    .likes-list li a {
-      color: #2e2e2e;
-      text-decoration: none;
-      font-weight: bold;
+      background-color: #333;
     }
 
     video {
-      max-width: 100%;
+      max-width: 90%;
       border-radius: 12px;
-      margin-top: 1.5rem;
-      box-shadow: 0 0 20px rgba(0,0,0,0.15);
+      box-shadow: 0 0 20px rgba(0,0,0,0.1);
+      margin-top: 1rem;
     }
   </style>
 </head>
 <body>
-  <h1>Terabox Stream</h1>
-  <input id="videoLink" type="text" placeholder="Paste Terabox link here" />
+  <h1>Stream & Download</h1>
+  <input type="text" id="urlInput" placeholder="Paste your Terabox link here" />
   <div class="actions">
-    <button onclick="playVideo()">▶️ Play</button>
-    <button onclick="saveLastLink()">💾 Save</button>
-    <button onclick="likeLink()">❤️ Like</button>
-    <button onclick="toggleTheme()">🌓 Theme</button>
+    <button onclick="play()">▶️ Play</button>
+    <button onclick="download()">⬇️ Download</button>
   </div>
-  <div class="likes-list">
-    <h3>❤️ Your Likes</h3>
-    <ul id="likes"></ul>
-  </div>
+  <video id="videoPlayer" controls></video>
 
   <script>
-    const input = document.getElementById('videoLink');
-    const likesUl = document.getElementById('likes');
+    async function play() {
+      const url = document.getElementById('urlInput').value;
+      if (!url) return alert('Please paste a valid link.');
 
-    function playVideo() {
-      const link = input.value.trim();
-      if (!link || !link.includes('terabox')) {
-        alert('Please enter a valid Terabox link.');
-        return;
+      const api = `https://terabox-api-henna.vercel.app/api/info?link=${encodeURIComponent(url)}`;
+      const res = await fetch(api);
+      const data = await res.json();
+
+      if (data?.data?.downloadUrl) {
+        const player = document.getElementById('videoPlayer');
+        player.src = data.data.downloadUrl;
+        player.style.display = 'block';
+        player.play();
+      } else {
+        alert('❌ Video not found or link is restricted.');
       }
+    }
 
-      const playBtn = document.querySelector('button');
-      playBtn.innerText = '⏳ Fetching...';
+    function download() {
+      const url = document.getElementById('urlInput').value;
+      if (!url) return alert('Please paste a valid link.');
 
-      fetch(`http://localhost:3000/resolve?url=${encodeURIComponent(link)}`)
+      const api = `https://terabox-api-henna.vercel.app/api/info?link=${encodeURIComponent(url)}`;
+      fetch(api)
         .then(res => res.json())
         .then(data => {
-          if (data.video) {
-            showVideoPlayer(data.video);
+          if (data?.data?.downloadUrl) {
+            window.open(data.data.downloadUrl, '_blank');
           } else {
-            alert('❌ Video not found.');
+            alert('❌ Unable to fetch download link.');
           }
         })
-        .catch(err => {
-          alert('Error contacting server.');
-          console.error(err);
-        })
-        .finally(() => {
-          playBtn.innerText = '▶️ Play';
-        });
+        .catch(err => alert('Network error'));
     }
-
-    function showVideoPlayer(videoUrl) {
-      const existingPlayer = document.getElementById('videoPlayer');
-      if (existingPlayer) existingPlayer.remove();
-
-      const video = document.createElement('video');
-      video.id = 'videoPlayer';
-      video.controls = true;
-      video.src = videoUrl;
-      video.autoplay = true;
-
-      document.body.appendChild(video);
-    }
-
-    function saveLastLink() {
-      const link = input.value.trim();
-      if (link) {
-        localStorage.setItem('lastLink', link);
-        alert('Last link saved!');
-      }
-    }
-
-    function likeLink() {
-      const link = input.value.trim();
-      if (link) {
-        let likes = JSON.parse(localStorage.getItem('likedLinks')) || [];
-        if (!likes.includes(link)) {
-          likes.push(link);
-          localStorage.setItem('likedLinks', JSON.stringify(likes));
-          renderLikes();
-        }
-      }
-    }
-
-    function renderLikes() {
-      likesUl.innerHTML = '';
-      let likes = JSON.parse(localStorage.getItem('likedLinks')) || [];
-      likes.forEach(link => {
-        const li = document.createElement('li');
-        li.innerHTML = `<a href="${link}" target="_blank">${link}</a>`;
-        likesUl.appendChild(li);
-      });
-    }
-
-    function toggleTheme() {
-      document.body.style.backgroundColor = document.body.style.backgroundColor === 'black' ? '#f3e3e1' : 'black';
-      document.body.style.color = document.body.style.color === 'white' ? '#111' : 'white';
-    }
-
-    function loadInitial() {
-      const last = localStorage.getItem('lastLink');
-      if (last) input.value = last;
-      renderLikes();
-    }
-
-    loadInitial();
   </script>
 </body>
 </html>
